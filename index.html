@@ -23,5 +23,42 @@ Error generating stack: `+n.message+`
   </head>
   <body>
     <div id="root"></div>
-  </body>
+  
+<script>
+(function () {
+  function maskContactNumbers() {
+    const phonePattern = /(?:\+?213|0)(?:5|6|7)[\s.-]?(?:\d[\s.-]?){8}/g;
+    const nodes = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const targets = [];
+    let n;
+    while ((n = nodes.nextNode())) {
+      const p = n.parentElement;
+      if (!p) continue;
+      const link = p.closest('a');
+      const href = (link && link.getAttribute('href') || '').toLowerCase();
+      const text = n.nodeValue || '';
+      if (!phonePattern.test(text)) { phonePattern.lastIndex = 0; continue; }
+      phonePattern.lastIndex = 0;
+      if (href.includes('whatsapp') || href.includes('wa.me')) {
+        if (link) link.setAttribute('aria-label', 'واتساب');
+        targets.push([n, text.replace(phonePattern, '')]);
+      } else if (href.startsWith('tel:')) {
+        if (link) link.setAttribute('aria-label', 'اتصال');
+        targets.push([n, text.replace(phonePattern, '')]);
+      }
+    }
+    targets.forEach(([node, value]) => { node.nodeValue = value; });
+  }
+  function run() {
+    maskContactNumbers();
+    setTimeout(maskContactNumbers, 300);
+    setTimeout(maskContactNumbers, 1000);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else run();
+  new MutationObserver(maskContactNumbers).observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>
+</body>
 </html>
