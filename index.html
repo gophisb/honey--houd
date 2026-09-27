@@ -60,5 +60,34 @@ Error generating stack: `+n.message+`
   new MutationObserver(maskContactNumbers).observe(document.documentElement, { childList: true, subtree: true });
 })();
 </script>
-</body>
+<style id="houd-whatsapp-only">
+a[href^="tel:"],a[href*="tel:"]{display:none!important}
+</style>
+<script>
+(function(){
+  const phone=/\b(?:\+?213|00213)?[\s.-]*0?[567](?:[\s.-]*\d){8}\b/g;
+  function clean(){
+    document.querySelectorAll('a[href^="tel:"],a[href*="tel:"]').forEach(a=>a.remove());
+    const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    let n;
+    while(n=w.nextNode()){
+      if(!phone.test(n.nodeValue||'')){phone.lastIndex=0;continue}
+      phone.lastIndex=0;
+      const a=n.parentElement?.closest('a');
+      if(a && (a.href||'').toLowerCase().includes('whatsapp')) continue;
+      nodes.push(n);
+    }
+    nodes.forEach(n=>{
+      n.nodeValue=n.nodeValue.replace(phone,'');
+      if(!n.nodeValue.trim()){
+        const el=n.parentElement;
+        if(el && el.tagName!=='BODY') el.style.display='none';
+      }
+    });
+  }
+  clean();
+  new MutationObserver(clean).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>\n</body>
 </html>
